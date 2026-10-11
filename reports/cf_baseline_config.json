@@ -1,0 +1,12 @@
+{
+  "model": "implicit ALS",
+  "mode": "liked",
+  "k": 64,
+  "alpha": 5,
+  "lam": 80,
+  "n_iter": 10,
+  "seed": 42,
+  "relevant_rating": 4.0,
+  "min_movie_ratings": 5,
+  "min_user_ratings": 10
+}
