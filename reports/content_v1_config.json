@@ -1,0 +1,46 @@
+{
+  "model_version": "content-v1",
+  "selected_configuration": "both_decade_1.0_idf_off",
+  "features": {
+    "genres_enabled": true,
+    "decades_enabled": true,
+    "genre_weight": 1.0,
+    "decade_weight": 1.0,
+    "idf_weighting": false,
+    "row_normalization": "L2"
+  },
+  "selection": {
+    "dataset": "MovieLens 32M - sample_10pct",
+    "catalogue_movies": 17241,
+    "relevance_threshold": 4.0,
+    "primary_metric": "NDCG@10",
+    "primary_slice": "tail",
+    "primary_view": "B",
+    "selection_split": "validation",
+    "configurations_evaluated": 10,
+    "tie_break_seeds": 10,
+    "bootstrap_resamples": 1000,
+    "confidence_level": 0.95,
+    "random_seed": 42
+  },
+  "validation_summary": {
+    "tail_ndcg_at_10": 0.00584,
+    "previous_default_tail_ndcg_at_10": 0.00529,
+    "tail_ndcg_difference": 0.00055,
+    "paired_difference_ci95": [
+      -0.00087,
+      0.00210
+    ],
+    "cold_ndcg_at_10": 0.00565,
+    "cold_ndcg_ci95": [
+      0.00236,
+      0.00943
+    ],
+    "improvement_over_default_conclusive": false
+  },
+  "notes": [
+    "Selected by validation tail-slice NDCG@10 in View B.",
+    "The observed improvement over the previous default is not statistically conclusive.",
+    "The test set was not used for configuration selection."
+  ]
+}
