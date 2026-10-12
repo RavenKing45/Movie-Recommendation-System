@@ -1,0 +1,28 @@
+{
+  "version": "tmdb-content-v2",
+  "baseline": "content-v1",
+  "feature_groups": {
+    "genres": "TMDB genre labels",
+    "keywords": "TMDB keywords",
+    "overview": "TMDB overview word and bigram TF-IDF",
+    "directors": "TMDB directors",
+    "cast": "TMDB top cast"
+  },
+  "tmdb_field_weights": {
+    "genres": 0.5,
+    "keywords": 0.5,
+    "overview": 0.5,
+    "directors": 0.5,
+    "cast": 0.5
+  },
+  "normalization": "L2 per field, then L2 on combined movie vector",
+  "baseline_configuration": {
+    "genre_weight": 1.0,
+    "decade_weight": 1.0,
+    "idf": false
+  },
+  "n_movies": 17241,
+  "n_features": 91328,
+  "matrix_format": "CSR sparse matrix",
+  "selection_split": "validation only"
+}
