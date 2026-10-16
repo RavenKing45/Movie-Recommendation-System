@@ -1,0 +1,13 @@
+# Runtime bundle is intentionally versioned for the simplest self-contained demo.
+# Keep all other generated models/data private and out of Git.
+models/*
+!models/als_v1_bundle.npz
+
+# Python/runtime noise
+__pycache__/
+*.py[cod]
+.streamlit/secrets.toml
+.env
+
+# Local deployment environment
+.venv/
