@@ -1,0 +1,27 @@
+{
+  "notebook": "10_lightfm_hybrid.ipynb",
+  "dataset_subset": "sample_10pct",
+  "positive_rating_threshold": 4.0,
+  "validation_window_start_utc": "2016-01-01T00:00:00Z",
+  "tail_definition": "fewer than 20 positive train interactions",
+  "strict_cold_definition": "zero positive train interactions",
+  "warm_tail_definition": "1-19 positive train interactions",
+  "test_split_used": false,
+  "lightfm": {
+    "loss": "warp",
+    "components": 32,
+    "epochs": 15,
+    "learning_rate": 0.05,
+    "item_alpha": 1e-06,
+    "user_alpha": 1e-06,
+    "max_sampled": 10,
+    "num_threads": 1,
+    "metadata_weighting": "for rows with metadata: identity feature mass 0.5, normalized metadata feature mass 0.5; empty metadata rows use identity mass 1.0"
+  },
+  "bootstrap_resamples": 1000,
+  "tie_breaking_seeds": 10,
+  "random_seed": 42,
+  "als_overall_view_a_ndcg_at_10": 0.0814621144630844,
+  "retention_fraction": 0.98,
+  "retention_floor": 0.07983287217382272
+}

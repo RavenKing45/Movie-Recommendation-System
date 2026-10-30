@@ -1,0 +1,13 @@
+{
+    "training_data": "train + validation",
+    "test_split": "sample_10pct test",
+    "cutoff_utc": "2016-01-01T00:00:00Z",
+    "minimum_relevant_rating": 4.0,
+    "warm_tail_definition": "1-19 positive interactions",
+    "selected_gate": 500,
+    "secondary_gate": 1000,
+    "recommendation_k": 10,
+    "tie_break_seeds": 10,
+    "bootstrap_replicates": 3000,
+    "bootstrap_seed": 2026
+}
