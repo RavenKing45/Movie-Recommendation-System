@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 import streamlit as st
+import streamlit.components.v1 as components
 
 APP_DIR = Path(__file__).resolve().parent
 BUNDLE_PATH = APP_DIR / "models" / "als_v1_bundle.npz"
@@ -275,7 +276,50 @@ except (FileNotFoundError, ValueError, KeyError) as exc:
     st.code(str(exc))
     st.stop()
 
-# ---------- Header / hero ----------
+# ---------- Session state ----------
+if "liked_items" not in st.session_state:
+    st.session_state.liked_items = []
+if "recommendations" not in st.session_state:
+    st.session_state.recommendations = None
+if "recommendation_method" not in st.session_state:
+    st.session_state.recommendation_method = ""
+
+POPULAR_COMPONENT_DIR = APP_DIR / "popular_row"
+_popular_row = components.declare_component("cinematch_popular_row", path=str(POPULAR_COMPONENT_DIR))
+
+FEATURED_COUNT = 5        # banner slides, rotated by CSS
+POPULAR_TOTAL = 18        # popular titles available in the row
+POPULAR_PAGE_SIZE = 6    # posters visible at once
+SLIDE_SECONDS = 5
+
+st.markdown(
+    """
+    <style>
+      .cm-banner { position:relative; height:470px; overflow:hidden; border-radius:6px; background:#0b0b0c; border:1px solid #242428; margin-bottom:1.6rem; }
+      .cm-slide { position:absolute; inset:0; opacity:0; background-color:#1a0c11; background-size:cover; background-position:center 25%;
+                  animation: cm-fade __DURATION__s linear infinite; }
+      .cm-slide:before { content:''; position:absolute; inset:0;
+                  background: linear-gradient(90deg, rgba(11,11,12,.96) 0%, rgba(11,11,12,.72) 42%, rgba(11,11,12,.15) 100%),
+                              linear-gradient(0deg, #0b0b0c 0%, rgba(11,11,12,0) 45%); }
+      @keyframes cm-fade { 0% {opacity:0} 4% {opacity:1} 20% {opacity:1} 24% {opacity:0} 100% {opacity:0} }
+      .cm-slide-copy { position:absolute; left:clamp(1.2rem,4vw,3.5rem); bottom:clamp(1.5rem,5vw,3.2rem); max-width:640px; z-index:1; }
+      .cm-slide-title { color:#fff; font-weight:900; font-size:clamp(2rem,4.6vw,3.9rem); line-height:1.0; letter-spacing:-.03em; text-transform:uppercase; margin:.5rem 0 .8rem; }
+      .cm-slide-genres { color:#e1e1e4; font-size:.8rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+      .cm-slide-count { color:#a5a5ad; font-size:.8rem; font-weight:700; margin-top:.4rem; }
+      .cm-begin { display:inline-block; margin-top:1.3rem; background:#e51d43; color:#fff !important; padding:.8rem 1.8rem; border-radius:9px;
+                  font-weight:800; font-size:.88rem; letter-spacing:.06em; text-transform:uppercase; text-decoration:none; }
+      .cm-begin:hover { background:#ff3157; box-shadow:0 6px 22px rgba(229,29,67,.25); }
+      .cm-row-title { color:#f8f8f9; font-size:.8rem; font-weight:800; line-height:1.3; margin:.5rem 0 .4rem; height:2.6rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
+      .cm-poster { width:100%; aspect-ratio:2/3; overflow:hidden; border-radius:4px; background:#19191c; }
+      .cm-poster img { width:100%; height:100%; object-fit:cover; display:block; }
+      .st-key-popular_prev, .st-key-popular_next { margin-top:8.5rem; }
+      .cm-in-profile { color:#f04a66; font-size:.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; margin-top:.3rem; }
+    </style>
+    """.replace("__DURATION__", str(FEATURED_COUNT * SLIDE_SECONDS)),
+    unsafe_allow_html=True,
+)
+
+# ---------- Header / nav ----------
 st.markdown(
     """
     <div class="cm-nav">
@@ -283,26 +327,62 @@ st.markdown(
       <div class="cm-nav-links"><span>Discover</span><span>Your taste</span><span>How it works</span></div>
       <div class="cm-status"><span>●</span>&nbsp; ALS-powered prototype</div>
     </div>
-    <section class="cm-hero">
-      <div class="cm-kicker">Your personal cinema starts here</div>
-      <h1>Find stories<br>that move <em>you.</em></h1>
-      <p>Tell us what you love. CineMatch learns from your movie taste and uncovers your next favourite, powered by collaborative filtering.</p>
-    </section>
-    <div class="cm-stat-strip">
-      <div class="cm-stat"><strong>17,241<span></span></strong><small>Movies in this catalogue</small></div>
-      <div class="cm-stat"><strong>64<span>D</span></strong><small>Latent factors in ALS</small></div>
-      <div class="cm-stat"><strong>YOUR<span> TASTE</span></strong><small>One profile · tailored picks</small></div>
-    </div>
     """,
     unsafe_allow_html=True,
 )
 
-if "liked_items" not in st.session_state:
-    st.session_state.liked_items = []
-if "recommendations" not in st.session_state:
-    st.session_state.recommendations = None
-if "recommendation_method" not in st.session_state:
-    st.session_state.recommendation_method = ""
+# ---------- Rotating banner (featured = most popular, rotates through top few) ----------
+featured = popularity_recommendations(model, k=FEATURED_COUNT)
+slides_html = []
+for pos, idx in enumerate(featured):
+    url = str(model["poster_urls"][idx]).strip()
+    bg = f"background-image:url('{url}');" if url.startswith("https://image.tmdb.org/t/p/") else ""
+    genres = " · ".join(g.strip() for g in str(model["genres"][idx]).split("|") if g.strip()) or "Genres unavailable"
+    count = int(model["positive_counts"][idx])
+    slides_html.append(
+        f'<div class="cm-slide" style="animation-delay:{pos * SLIDE_SECONDS}s;{bg}">'
+        f'<div class="cm-slide-copy">'
+        f'<div class="cm-kicker">Most loved in the sample</div>'
+        f'<div class="cm-slide-title">{escape(str(model["titles"][idx]))}</div>'
+        f'<div class="cm-slide-genres">{escape(genres)}</div>'
+        f'<div class="cm-slide-count">♥ {count:,} positive interactions</div>'
+        f'<a class="cm-begin" href="#taste-profile">Begin</a>'
+        f'</div></div>'
+    )
+st.markdown('<div class="cm-banner">' + "".join(slides_html) + "</div>", unsafe_allow_html=True)
+
+# ---------- Popular movies row (custom component: 6 at a time, arrows + hover paging) ----------
+st.markdown(
+    '<div class="cm-section-heading"><h2>Popular <span>movies</span></h2><small>00 / trending</small></div>',
+    unsafe_allow_html=True,
+)
+
+popular_items = []
+for idx in popularity_recommendations(model, k=POPULAR_TOTAL):
+    url = str(model["poster_urls"][idx]).strip()
+    popular_items.append({
+        "idx": int(idx),
+        "title": str(model["titles"][idx]),
+        "poster": url if url.startswith("https://image.tmdb.org/t/p/") else "",
+        "inProfile": int(idx) in st.session_state.liked_items,
+    })
+
+popular_event = _popular_row(
+    items=popular_items,
+    pageSize=POPULAR_PAGE_SIZE,
+    key="cinematch_popular_row",
+    default=None,
+)
+
+if isinstance(popular_event, dict) and popular_event.get("n") != st.session_state.get("popular_last_event"):
+    st.session_state.popular_last_event = popular_event.get("n")
+    movie_idx = int(popular_event["add"])
+    if movie_idx not in st.session_state.liked_items:
+        add_to_profile(movie_idx)
+        st.rerun()
+
+st.markdown('<div id="taste-profile"></div>', unsafe_allow_html=True)
+
 
 # ---------- Taste profile panel ----------
 st.markdown(

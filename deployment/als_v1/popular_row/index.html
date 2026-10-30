@@ -1,0 +1,171 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: transparent; }
+  body { color: #f7f7f8; font-family: 'Montserrat', Arial, sans-serif; overflow: hidden; }
+
+  .wrap { display: grid; grid-template-columns: 38px 1fr 38px; gap: 10px; align-items: start; }
+  .arrow {
+    margin-top: 40%; height: 46px; background: #19191c; color: #f7f7f8; border: 1px solid #3a3a40;
+    border-radius: 9px; font-size: 1.5rem; font-weight: 800; cursor: pointer; font-family: inherit;
+  }
+  .arrow:hover:not(:disabled) { border-color: #e51d43; color: #fff; }
+  .arrow:disabled { opacity: .35; cursor: default; }
+
+  .viewport { overflow: hidden; width: 100%; position: relative; }
+  .track { display: flex; width: 100%; transition: transform .55s ease; }
+  .page { flex: 0 0 100%; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+
+  .card { min-width: 0; }
+  .poster {
+    width: 100%; aspect-ratio: 2 / 3; overflow: hidden; border-radius: 4px;
+    background: #19191c; border: 1px solid #2a2a2e;
+  }
+  .poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .fallback {
+    width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between;
+    padding: 12px; background: linear-gradient(155deg, #27272b, #141416 55%, #321019);
+    text-transform: uppercase; font-weight: 900;
+  }
+  .fallback .big { font-size: 1.2rem; line-height: 1.1; overflow-wrap: anywhere; }
+  .fallback .small { color: #f14a67; font-size: .6rem; letter-spacing: .1em; }
+
+  .title {
+    color: #f8f8f9; font-size: .78rem; font-weight: 800; line-height: 1.3; height: 2.6rem;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    margin: 8px 0 6px; overflow-wrap: anywhere;
+  }
+  button.add {
+    width: 100%; background: #19191c; color: #f7f7f8; border: 1px solid #3a3a40; border-radius: 9px;
+    padding: .5rem; font-weight: 800; font-size: .85rem; cursor: pointer; font-family: inherit;
+  }
+  button.add:hover { border-color: #e51d43; color: #fff; }
+  .inprof {
+    color: #f04a66; font-size: .72rem; font-weight: 800; letter-spacing: .06em;
+    text-transform: uppercase; text-align: center; padding: .5rem 0;
+  }
+  .footer { color: #a5a5ad; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; text-align: center; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <button class="arrow" id="prev" aria-label="Previous">&#8249;</button>
+  <div class="viewport" id="viewport"><div class="track" id="track"></div></div>
+  <button class="arrow" id="next" aria-label="Next">&#8250;</button>
+</div>
+<div class="footer" id="footer"></div>
+
+<script>
+(function () {
+  var DEFAULT_PAGE_SIZE = 6;
+  var EDGE = 0.15;          // 15% at each side of the viewport triggers hover paging
+  var HOVER_STEP_MS = 800;  // time between pages while hovering an edge
+
+  var state = { items: [], pageSize: DEFAULT_PAGE_SIZE, page: 0, pages: 1, counter: 0, edge: 0 };
+  var track = document.getElementById("track");
+  var viewport = document.getElementById("viewport");
+  var footer = document.getElementById("footer");
+  var prevBtn = document.getElementById("prev");
+  var nextBtn = document.getElementById("next");
+
+  function post(type, data) {
+    var msg = { isStreamlitMessage: true, type: type };
+    Object.keys(data || {}).forEach(function (k) { msg[k] = data[k]; });
+    window.parent.postMessage(msg, "*");
+  }
+
+  function setHeight() {
+    post("streamlit:setFrameHeight", { height: document.body.scrollHeight });
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function goTo(p) {
+    state.page = Math.max(0, Math.min(p, state.pages - 1));
+    track.style.transform = "translateX(-" + (state.page * 100) + "%)";
+    footer.textContent = "Page " + (state.page + 1) + " of " + state.pages;
+    prevBtn.disabled = state.pages <= 1;
+    nextBtn.disabled = state.pages <= 1;
+  }
+
+  function step(delta, wrap) {
+    if (state.pages <= 1) return;
+    var target = state.page + delta;
+    if (wrap) target = (target + state.pages) % state.pages;
+    goTo(target);
+  }
+
+  function render() {
+    var ps = state.pageSize;
+    state.pages = Math.max(1, Math.ceil(state.items.length / ps));
+    var html = "";
+    for (var p = 0; p < state.pages; p++) {
+      html += '<div class="page">';
+      state.items.slice(p * ps, (p + 1) * ps).forEach(function (it) {
+        var poster = it.poster
+          ? '<img src="' + esc(it.poster) + '" alt="' + esc(it.title) + '">'
+          : '<div class="fallback"><div class="small">CineMatch+ / Film</div>' +
+            '<div class="big">' + esc(String(it.title).split("(")[0].trim()) + '</div>' +
+            '<div class="small">A story waiting to be found</div></div>';
+        var action = it.inProfile
+          ? '<div class="inprof">&#9829; In profile</div>'
+          : '<button class="add" data-idx="' + Number(it.idx) + '">Add</button>';
+        html += '<div class="card"><div class="poster">' + poster + '</div>' +
+                '<div class="title">' + esc(it.title) + '</div>' + action + '</div>';
+      });
+      html += "</div>";
+    }
+    track.innerHTML = html;
+    goTo(state.page);
+    setHeight();
+  }
+
+  prevBtn.addEventListener("click", function () { step(-1, true); });
+  nextBtn.addEventListener("click", function () { step(1, true); });
+
+  // Hovering near the left or right edge of the row moves one page at a time.
+  viewport.addEventListener("mousemove", function (e) {
+    var r = viewport.getBoundingClientRect();
+    var x = (e.clientX - r.left) / r.width;
+    state.edge = x > 1 - EDGE ? 1 : (x < EDGE ? -1 : 0);
+  });
+  viewport.addEventListener("mouseleave", function () { state.edge = 0; });
+  setInterval(function () {
+    if (state.edge === 1) step(1, false);
+    else if (state.edge === -1) step(-1, false);
+  }, HOVER_STEP_MS);
+
+  // Add buttons send the movie index back to Python.
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest && e.target.closest("button.add");
+    if (!btn) return;
+    state.counter += 1;
+    post("streamlit:setComponentValue", {
+      value: { add: Number(btn.getAttribute("data-idx")), n: state.counter },
+      dataType: "json"
+    });
+  });
+
+  window.addEventListener("message", function (e) {
+    var d = e.data;
+    if (!d || d.type !== "streamlit:render") return;
+    var args = d.args || {};
+    state.items = args.items || [];
+    state.pageSize = args.pageSize || DEFAULT_PAGE_SIZE;
+    render();
+  });
+  window.addEventListener("resize", setHeight);
+
+  post("streamlit:componentReady", { apiVersion: 1 });
+})();
+</script>
+</body>
+</html>
