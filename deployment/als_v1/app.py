@@ -45,10 +45,26 @@ def load_bundle(path_string: str) -> dict[str, Any]:
             else np.full(len(titles), "", dtype=str)
         )
 
+        backdrop_urls = (
+            np.asarray(data["backdrop_urls"], dtype=str)
+            if "backdrop_urls" in data.files
+            else np.full(len(titles), "", dtype=str)
+        )
+        overviews = (
+            np.asarray(data["overviews"], dtype=str)
+            if "overviews" in data.files
+            else np.full(len(titles), "", dtype=str)
+        )
+        vote_averages = (
+            np.asarray(data["vote_averages"], dtype=np.float32)
+            if "vote_averages" in data.files
+            else np.zeros(len(titles), dtype=np.float32)
+        )
+
     n_items = q.shape[0]
     if q.ndim != 2 or q.shape[1] != 64:
         raise ValueError(f"Expected Q with shape (n_items, 64); received {q.shape}.")
-    if any(len(x) != n_items for x in (movie_ids, titles, genres, positive_counts, poster_urls)):
+    if any(len(x) != n_items for x in (movie_ids, titles, genres, positive_counts, poster_urls, backdrop_urls, overviews, vote_averages)):
         raise ValueError("ALS factors and catalogue arrays do not have matching lengths.")
     if not np.isfinite(q).all():
         raise ValueError("The ALS item-factor matrix contains NaN or infinite values.")
@@ -63,6 +79,9 @@ def load_bundle(path_string: str) -> dict[str, Any]:
         "genres": genres,
         "positive_counts": positive_counts,
         "poster_urls": poster_urls,
+        "backdrop_urls": backdrop_urls,
+        "overviews": overviews,
+        "vote_averages": vote_averages,
         "has_factor": has_factor,
         "gram": gram,
     }
@@ -295,39 +314,23 @@ SLIDE_SECONDS = 5
 st.markdown(
     """
     <style>
-      .cm-banner { position:relative; height:470px; overflow:hidden; border-radius:6px; background:#0b0b0c; border:1px solid #242428; margin-bottom:1.6rem; }
-      .cm-slide { position:absolute; inset:0; opacity:0; background-color:#1a0c11; background-size:cover; background-position:center 25%;
+      .cm-banner { position:relative; height:560px; overflow:hidden; border-radius:6px; background:#0b0b0c; border:1px solid #242428; margin-bottom:1.6rem; }
+      .cm-slide { position:absolute; inset:0; opacity:0; background-color:#0f0f11; background-size:cover; background-position:center 30%; background-repeat:no-repeat;
                   animation: cm-fade __DURATION__s linear infinite; }
       .cm-slide:before { content:''; position:absolute; inset:0;
-                  background: linear-gradient(90deg, rgba(11,11,12,.96) 0%, rgba(11,11,12,.72) 42%, rgba(11,11,12,.15) 100%),
-                              linear-gradient(0deg, #0b0b0c 0%, rgba(11,11,12,0) 45%); }
+                  background: linear-gradient(90deg, rgba(11,11,12,.96) 0%, rgba(11,11,12,.62) 42%, rgba(11,11,12,.08) 100%),
+                              linear-gradient(0deg, #0b0b0c 0%, rgba(11,11,12,0) 55%); }
       @keyframes cm-fade { 0% {opacity:0} 4% {opacity:1} 20% {opacity:1} 24% {opacity:0} 100% {opacity:0} }
-      .cm-slide-copy { position:absolute; left:clamp(1.2rem,4vw,3.5rem); bottom:clamp(1.5rem,5vw,3.2rem); max-width:640px; z-index:1; }
-      .cm-slide-title { color:#fff; font-weight:900; font-size:clamp(2rem,4.6vw,3.9rem); line-height:1.0; letter-spacing:-.03em; text-transform:uppercase; margin:.5rem 0 .8rem; }
-      .cm-slide-genres { color:#e1e1e4; font-size:.8rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
-      .cm-slide-count { color:#a5a5ad; font-size:.8rem; font-weight:700; margin-top:.4rem; }
+      .cm-slide-copy { position:absolute; left:clamp(1.2rem,4vw,3.5rem); bottom:clamp(1.8rem,5vw,3.5rem); max-width:600px; z-index:1; }
+      .cm-slide-title { color:#fff; font-weight:900; font-size:clamp(2.2rem,4.8vw,4.2rem); line-height:1.0; letter-spacing:-.03em; text-transform:uppercase; margin:.5rem 0 .75rem; }
+      .cm-slide-stars { color:#f5b301; font-size:1rem; letter-spacing:.12em; }
+      .cm-slide-genres { color:#e1e1e4; font-size:.78rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; margin-top:.5rem; }
+      .cm-slide-overview { color:#d6d6dc; font-size:.9rem; line-height:1.6; margin:.7rem 0 0; max-width:540px; }
       .cm-begin { display:inline-block; margin-top:1.3rem; background:#e51d43; color:#fff !important; padding:.8rem 1.8rem; border-radius:9px;
                   font-weight:800; font-size:.88rem; letter-spacing:.06em; text-transform:uppercase; text-decoration:none; }
       .cm-begin:hover { background:#ff3157; box-shadow:0 6px 22px rgba(229,29,67,.25); }
-      .cm-row-title { color:#f8f8f9; font-size:.8rem; font-weight:800; line-height:1.3; margin:.5rem 0 .4rem; height:2.6rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
-      .cm-poster { width:100%; aspect-ratio:2/3; overflow:hidden; border-radius:4px; background:#19191c; }
-      .cm-poster img { width:100%; height:100%; object-fit:cover; display:block; }
-      .st-key-popular_prev, .st-key-popular_next { margin-top:8.5rem; }
-      .cm-in-profile { color:#f04a66; font-size:.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; margin-top:.3rem; }
     </style>
     """.replace("__DURATION__", str(FEATURED_COUNT * SLIDE_SECONDS)),
-    unsafe_allow_html=True,
-)
-
-# ---------- Header / nav ----------
-st.markdown(
-    """
-    <div class="cm-nav">
-      <div class="cm-brand"><span class="cm-brand-icon">◉</span> CINE<span style="color:#fff">MATCH</span><span class="cm-brand-plus">+</span></div>
-      <div class="cm-nav-links"><span>Discover</span><span>Your taste</span><span>How it works</span></div>
-      <div class="cm-status"><span>●</span>&nbsp; ALS-powered prototype</div>
-    </div>
-    """,
     unsafe_allow_html=True,
 )
 
@@ -335,17 +338,41 @@ st.markdown(
 featured = popularity_recommendations(model, k=FEATURED_COUNT)
 slides_html = []
 for pos, idx in enumerate(featured):
-    url = str(model["poster_urls"][idx]).strip()
-    bg = f"background-image:url('{url}');" if url.startswith("https://image.tmdb.org/t/p/") else ""
+    backdrop = str(model["backdrop_urls"][idx]).strip()
+    poster = str(model["poster_urls"][idx]).strip()
+    if backdrop.startswith("https://image.tmdb.org/t/p/"):
+        image_url = backdrop
+    elif poster.startswith("https://image.tmdb.org/t/p/"):
+        image_url = poster
+    else:
+        image_url = ""
+    bg = f"background-image:url('{image_url}');" if image_url else ""
+
+    title = str(model["titles"][idx])
     genres = " · ".join(g.strip() for g in str(model["genres"][idx]).split("|") if g.strip()) or "Genres unavailable"
-    count = int(model["positive_counts"][idx])
+
+    rating = float(model["vote_averages"][idx])
+    stars_html = ""
+    if rating > 0:
+        filled = max(0, min(5, int(round(rating / 2))))
+        stars_html = (
+            f'<div class="cm-slide-stars">{"★" * filled}{"☆" * (5 - filled)}'
+            f' <span style="color:#a5a5ad;font-size:.75rem;letter-spacing:.04em">{rating:.1f}/10</span></div>'
+        )
+
+    overview = str(model["overviews"][idx]).strip()
+    if len(overview) > 230:
+        overview = overview[:230].rsplit(" ", 1)[0] + "…"
+    overview_html = f'<div class="cm-slide-overview">{escape(overview)}</div>' if overview else ""
+
     slides_html.append(
         f'<div class="cm-slide" style="animation-delay:{pos * SLIDE_SECONDS}s;{bg}">'
         f'<div class="cm-slide-copy">'
         f'<div class="cm-kicker">Most loved in the sample</div>'
-        f'<div class="cm-slide-title">{escape(str(model["titles"][idx]))}</div>'
+        f'<div class="cm-slide-title">{escape(title)}</div>'
+        f'{stars_html}'
         f'<div class="cm-slide-genres">{escape(genres)}</div>'
-        f'<div class="cm-slide-count">♥ {count:,} positive interactions</div>'
+        f'{overview_html}'
         f'<a class="cm-begin" href="#taste-profile">Begin</a>'
         f'</div></div>'
     )
