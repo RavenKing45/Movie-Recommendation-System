@@ -1,5 +1,5 @@
 {
-  "notebook": "10_lightfm_hybrid.ipynb",
+  "notebook": "05_final_hybrid_evaluation.ipynb",
   "dataset_subset": "sample_10pct",
   "positive_rating_threshold": 4.0,
   "validation_window_start_utc": "2016-01-01T00:00:00Z",

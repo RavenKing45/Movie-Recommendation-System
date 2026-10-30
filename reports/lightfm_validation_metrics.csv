@@ -8,9 +8,6 @@ LightFM_identity,overall,hit_rate@10,5661,0.2552552552552553,0.2439498321851263,
 LightFM_content_v1,overall,ndcg@10,5661,0.06272863642395529,0.05904751733497297,0.06625271834183832
 LightFM_content_v1,overall,recall@10,5661,0.08274787392434452,0.07819562384513365,0.08748453109972716
 LightFM_content_v1,overall,hit_rate@10,5661,0.2515456633103692,0.23988252958841194,0.2632087970323264
-LightFM_TMDB_v2,overall,ndcg@10,5661,0.06334045448662262,0.05979034296768832,0.06698077246607353
-LightFM_TMDB_v2,overall,recall@10,5661,0.08382205735146911,0.0789942445947348,0.08881199301542438
-LightFM_TMDB_v2,overall,hit_rate@10,5661,0.2549019607843137,0.24377318494965552,0.2663884472708002
 ALS_only,tail,ndcg@10,948,0.0,0.0,0.0
 ALS_only,tail,recall@10,948,0.0,0.0,0.0
 ALS_only,tail,hit_rate@10,948,0.0,0.0,0.0
@@ -20,9 +17,6 @@ LightFM_identity,tail,hit_rate@10,948,0.0,0.0,0.0
 LightFM_content_v1,tail,ndcg@10,948,0.0,0.0,0.0
 LightFM_content_v1,tail,recall@10,948,0.0,0.0,0.0
 LightFM_content_v1,tail,hit_rate@10,948,0.0,0.0,0.0
-LightFM_TMDB_v2,tail,ndcg@10,948,0.0,0.0,0.0
-LightFM_TMDB_v2,tail,recall@10,948,0.0,0.0,0.0
-LightFM_TMDB_v2,tail,hit_rate@10,948,0.0,0.0,0.0
 ALS_only,strict_cold,ndcg@10,50,0.0,0.0,0.0
 ALS_only,strict_cold,recall@10,50,0.0,0.0,0.0
 ALS_only,strict_cold,hit_rate@10,50,0.0,0.0,0.0
@@ -32,9 +26,6 @@ LightFM_identity,strict_cold,hit_rate@10,50,0.0,0.0,0.0
 LightFM_content_v1,strict_cold,ndcg@10,50,0.0,0.0,0.0
 LightFM_content_v1,strict_cold,recall@10,50,0.0,0.0,0.0
 LightFM_content_v1,strict_cold,hit_rate@10,50,0.0,0.0,0.0
-LightFM_TMDB_v2,strict_cold,ndcg@10,50,0.0,0.0,0.0
-LightFM_TMDB_v2,strict_cold,recall@10,50,0.0,0.0,0.0
-LightFM_TMDB_v2,strict_cold,hit_rate@10,50,0.0,0.0,0.0
 ALS_only,warm_tail,ndcg@10,931,0.0,0.0,0.0
 ALS_only,warm_tail,recall@10,931,0.0,0.0,0.0
 ALS_only,warm_tail,hit_rate@10,931,0.0,0.0,0.0
@@ -44,6 +35,3 @@ LightFM_identity,warm_tail,hit_rate@10,931,0.0,0.0,0.0
 LightFM_content_v1,warm_tail,ndcg@10,931,0.0,0.0,0.0
 LightFM_content_v1,warm_tail,recall@10,931,0.0,0.0,0.0
 LightFM_content_v1,warm_tail,hit_rate@10,931,0.0,0.0,0.0
-LightFM_TMDB_v2,warm_tail,ndcg@10,931,0.0,0.0,0.0
-LightFM_TMDB_v2,warm_tail,recall@10,931,0.0,0.0,0.0
-LightFM_TMDB_v2,warm_tail,hit_rate@10,931,0.0,0.0,0.0

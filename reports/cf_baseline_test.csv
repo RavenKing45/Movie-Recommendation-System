@@ -1,7 +1,5 @@
 ,Recall@10,NDCG@10,HitRate@10,Coverage
-popularity (all ratings),0.0531,0.0393,0.1562,0.0147
-popularity (ratings >= 4),0.0524,0.0396,0.1564,0.0148
-"popularity (all ratings), users with pos.",0.0531,0.0393,0.1563,0.0147
-[nb 03] explicit MF,0.002,0.0012,0.0072,0.2628
-"implicit ALS (liked, k=64, a=5, lam=80), all users",0.1193,0.0878,0.3144,0.0904
-"implicit ALS (same), users with pos.",0.1193,0.0878,0.3145,0.0904
+Popularity (all ratings),0.0531,0.0393,0.1562,0.0147
+Popularity (ratings >= 4),0.0524,0.0396,0.1564,0.0148
+Explicit MF,0.002,0.0012,0.0072,0.2628
+Implicit ALS,0.1193,0.0878,0.3144,0.0904
